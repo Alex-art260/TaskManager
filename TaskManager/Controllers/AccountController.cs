@@ -29,9 +29,11 @@ namespace TaskManager.Controllers
 
                 if (result.Succeeded)
                 {
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Index", "Task");
                 }
                 ModelState.AddModelError("", "Invalid login attempt");
+
+
                 return View(model);
             }
             return View(model);

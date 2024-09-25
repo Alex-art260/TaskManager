@@ -1,0 +1,115 @@
+﻿@model TaskModel;
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Форма задачи</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.OpenAIapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+
+    </style>
+</head>
+<body>
+    <div class="form-group">
+        <div class="row">
+            <div class="col-md-6">
+                <h2 class="mb-4">Новая задача</h2>
+                <form id="taskForm" action="/Task/Create" method="post">
+                    <div class="form-group">
+                        <label for="taskName">Название задачи:</label>
+                        <input type="text" class="form-control" id="taskName" placeholder="Введите название задачи">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">Описание задачи:</label>
+                        <textarea class="form-control" id="taskDescription" rows="5" placeholder="Введите описание задачи"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h2 class="mb-4">Детали задачи</h2>
+                <form id="taskForm" action="/Task/Create" method="post">
+                    <div class="form-group">
+                        <label for="creationDate">Дата создания:</label>
+                        <input type="datetime-local" class="form-control" id="creationDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="closingDate">Дата закрытия:</label>
+                        <input type="datetime-local" class="form-control" id="closingDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="taskStatus">Статус задачи:</label>
+                        <select class="form-control" id="taskStatus">
+                            <option value="new">Новая</option>
+                            <option value="inProgress">В работе</option>
+                            <option value="completed">Завершена</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-12">
+                <h2 class="mb-4">Комментарии</h2>
+                <textarea class="form-control" id="taskComments" rows="5" placeholder="Добавить комментарии"></textarea>
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:20px; padding-bottom:80px;">
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary" form="taskForm">Сохранить задачу</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.getElementById('taskForm').addEventListener('submit', function (event) {
+            event.preventDefault(); // Предотвращаем стандартную отправку формы
+
+            var Name = document.getElementById("taskName").value;
+            var Description = document.getElementById("taskDescription").value;
+            var CreatedDate = document.getElementById("creationDate").value;
+            var FinishedDate = document.getElementById("closingDate").value;
+            var Comment = document.getElementById("taskComments").value;
+            var StatusTask = document.getElementById("taskStatus").value;
+
+            // Создание объекта с данными
+            var taskData = {
+                Name: Name,
+                Description: Description,
+                CreatedDate: CreatedDate,
+                FinishedDate: FinishedDate,
+                Comment: Comment,
+                StatusTask: StatusTask
+            };
+
+            // Отправка данных на сервер через AJAX
+            $.ajax({
+                url: '/Task/CreateTask',
+                type: 'POST',
+                data: JSON.stringify(taskData),
+                contentType: 'application/json',
+                success: function (response) {
+                    // Обработка успешного ответа
+                    console.log('Задача успешно сохранена!');
+                    // Добавьте логику для обновления UI или перенаправления пользователя
+                    window.location.href = '/Task/Index';
+                },
+                error: function (error) {
+                    // Обработка ошибки
+                    console.error('Ошибка при сохранении задачи:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+

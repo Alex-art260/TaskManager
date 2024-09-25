@@ -1,0 +1,137 @@
+﻿@model IEnumerable<TaskManager.Models.TaskModel>
+
+<div class="container p-3">
+    <div class="row pt-4">
+        <div class="col-6">
+            <h2 class="text-primary">Задачи</h2>
+        </div>
+    </div>
+
+    <div class="row pt-4">
+        <div class="col-6 text-right">
+            <a asp-controller="Task" asp-action="Create" class="btn btn-primary">
+                <i class="fas fa-plus"></i> &nbsp; Добавить задачу
+            </a>
+        </div>
+    </div>
+
+    <br /><br />
+
+    @if (Model != null && Model.Count() > 0)
+    {
+        <table class="table table-bordered table-striped" style="width:100%">
+            <thead>
+                <tr>
+                    <th>
+                        Номер
+                    </th>
+                    <th>
+                        Название
+                    </th>
+                    <th>
+                        Описание
+                    </th>
+                    <th>
+                        Дата создания
+                    </th>
+                    <th>
+                        Дата закрытия
+                    </th>
+                    <th>
+                        Автор задачи
+                    </th>
+                    <th>
+                        Статус задачи
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var obj in Model)
+                {
+                    <tr class="task-row" data-task-id="@obj.Id">
+                        <td width="20%">@obj.Id</td>
+                        <td width="20%">@obj.Name</td>
+                        <td width="20%">@obj.Description</td>
+                        <td width="20%">@obj.CreatedDate</td>
+                        <td width="20%">@obj.FinishedDate</td>
+                        <td width="20%">@(obj.Author != null ? obj.Author.Name : "не указано")</td>
+                        <td width="20%">
+                            @switch (obj.StatusTask)
+                            {
+                                case StatusTask.New:
+                                    @:Создано
+                                    break;
+                                case StatusTask.InProgress:
+                                    @:В работе
+                                    break;
+                                case StatusTask.Completed:
+                                    @:Завершена
+                                    break;
+                                default:
+                                    @:Неизвестный статус
+                                    break;
+                            }
+                        </td>
+                        <td width="20%">
+                            <button class="btn btn-danger delete-task" data-task-id="@obj.Id">Удалить</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p> Нет созданных задач.</p>
+    }
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+
+    $(document).on('click', '.task-row', function (event) {
+        if ($(event.target).hasClass('delete-task')) {
+
+            var taskId = $(this).data('task-id');
+
+            // Подтверждение удаления
+            if (confirm("Вы действительно хотите удалить задачу?")) {
+                // AJAX-запрос для удаления задачи
+                $.ajax({
+                    url: '/Task/Delete/' + taskId, // URL-адрес действия Delete в контроллере
+                    type: 'POST',
+                    success: function (response) {
+                        // Обновление страницы после удаления
+                        location.reload();
+                    },
+                    error: function (error) {
+                        console.error('Ошибка при удалении задачи:', error);
+                    }
+                });
+            }
+        } else {
+            var taskId = $(this).data('task-id');
+
+            $.ajax({
+                url: '/Task/GetTaskById/' + taskId,
+                type: 'GET',
+                success: function (response) {
+                    // Обновление страницы после удаления
+                    window.location.href = '/Task/GetTaskById/' + taskId;
+                },
+                error: function (error) {
+                    console.error('Ошибка:', error);
+                }
+            });
+
+            // Выводим информацию о задаче или выполняем другое действие
+            console.log("Нажата строка с taskId:", taskId);
+            // ...
+        }
+    });
+</script>
