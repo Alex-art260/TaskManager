@@ -1,4 +1,5 @@
-﻿@model TaskModel;
+﻿@using System.Security.Claims
+@model TaskModel;
 
 <!DOCTYPE html>
 <html lang="en">
@@ -75,18 +76,43 @@
             var Description = document.getElementById("taskDescription").value;
             var CreatedDate = document.getElementById("creationDate").value;
             var FinishedDate = document.getElementById("closingDate").value;
-            var Comment = document.getElementById("taskComments").value;
             var StatusTask = document.getElementById("taskStatus").value;
+            var Comments = document.getElementById("taskComments").value;
+            var AuthorId = "@User.FindFirstValue(ClaimTypes.NameIdentifier).ToString()";
 
             // Создание объекта с данными
+
             var taskData = {
-                Name: Name,
-                Description: Description,
-                CreatedDate: CreatedDate,
-                FinishedDate: FinishedDate,
-                Comment: Comment,
-                StatusTask: StatusTask
+                Task: {
+                    Name: Name,
+                    Description: Description,
+                    CreatedDate: CreatedDate,
+                    FinishedDate: FinishedDate,
+                    StatusTask: StatusTask,
+                    AuthorId: AuthorId,
+                },
+                Comments: []
             };
+
+            taskData.Task.Name = Name;
+            taskData.Task.Description = Description;
+            taskData.Task.CreatedDate = CreatedDate;
+            taskData.Task.FinishedDate = FinishedDate;
+            taskData.Task.StatusTask = StatusTask;
+            taskData.Task.AuthorId = AuthorId;
+
+            console.error(typeof AuthorId);
+
+            if (Comments.trim() !== "") {
+                taskData.Comments.push({
+                    CommentText: Comments,
+                    CreatedDate: new Date().toISOString(), // Текущая дата и время
+                    TaskId: 0, // ID задачи будет добавлен на сервере
+                    AuthorId: AuthorId
+                    });
+            }
+
+           
 
             // Отправка данных на сервер через AJAX
             $.ajax({

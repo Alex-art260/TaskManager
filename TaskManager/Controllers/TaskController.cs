@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using TaskManager.Data;
 using TaskManager.Interfaces;
 using TaskManager.Models;
+using TaskManager.ViewModel;
 
 namespace TaskManager.Controllers
 {
@@ -40,7 +42,7 @@ namespace TaskManager.Controllers
             var requestBody = await new StreamReader(Request.Body).ReadToEndAsync();
 
             // Десериализация данных из JSON в объект модели
-            var taskData = JsonConvert.DeserializeObject<TaskModel>(requestBody);
+            var taskData = JsonConvert.DeserializeObject<TaskVM>(requestBody);
 
             // Проверка на валидность данных
             if (ModelState.IsValid && taskData != null)
@@ -64,13 +66,14 @@ namespace TaskManager.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Update(int id, TaskModel model)
+        public async Task<IActionResult> Update(int id, TaskVM model)
         {
             if (ModelState.IsValid)
             {
                 var updatedTask = await _taskService.Update(id, model);
 
-                return View(updatedTask);
+                 return View(updatedTask);
+
             }
 
             return View(model);
@@ -79,7 +82,9 @@ namespace TaskManager.Controllers
         [HttpGet]
         public async Task<IActionResult> GetTaskById(int id)
         {
-           var task = await _taskService.GetTaskById(id);
+            var task = await _taskService.GetTaskById(id);
+
+            ViewBag.AuthorName = task.Author?.Name;
 
             return View("Update", task);
         }

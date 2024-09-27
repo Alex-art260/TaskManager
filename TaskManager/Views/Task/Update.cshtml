@@ -1,6 +1,7 @@
 ﻿@using System.Security.Claims
 @model TaskModel;
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,81 +10,96 @@
     <title>Форма задачи</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <script src="https://ajax.OpenAIapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <style>
-
-    </style>
 </head>
 <body>
-    <div class="form-group">
-        <div class="row">
-            <div class="col-md-6">
-                <h2 class="mb-4">Новая задача</h2>
-                <form id="taskForm" action="/Task/Update/@Model.Id" method="post">
-                    <input type="hidden" name="Id" value="@Model.Id" />
-                    <div class="form-group">
-                        <label for="taskName">Название задачи:</label>
-                        <input type="text" class="form-control" id="taskName" placeholder="Введите название задачи" value="@Model.Name" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="taskDescription">Описание задачи:</label>
-                        <textarea class="form-control" id="taskDescription" rows="5" placeholder="Введите описание задачи" disabled>@Model.Description</textarea>
-                    </div>
-                </form>
+<div class="form-group">
+    <div class="row">
+        <div class="col-md-6">
+            <h2 class="mb-4">Новая задача</h2>
+            <form id="taskForm"  method="post">
+                <input type="hidden" name="Id" value="@Model.Id" />
+                <div class="form-group">
+                    <label for="taskName">Название задачи:</label>
+                    <input type="text" class="form-control" id="taskName" placeholder="Введите название задачи" value="@Model.Name" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="taskDescription">Описание задачи:</label>
+                    <textarea class="form-control" id="taskDescription" rows="5" placeholder="Введите описание задачи" disabled>@Model.Description</textarea>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6">
+            <h2 class="mb-4">Детали задачи</h2>
+            <div class="form-group">
+                <label for="creationDate">Дата создания:</label>
+                <input type="datetime-local" class="form-control" id="creationDate" value="@Model.CreatedDate.ToString("yyyy-MM-ddTHH:mm")" disabled>
             </div>
-            <div class="col-md-6">
-                <h2 class="mb-4">Детали задачи</h2>
-                <form id="taskForm" >
-                    <div class="form-group">
-                        <label for="creationDate">Дата создания:</label>
-                        <input type="datetime-local" class="form-control" id="creationDate" value="@Model.CreatedDate.ToString("yyyy-MM-ddTHH:mm")" disabled>
-                    </div>
-                    <div class="form-group">
-                        <label for="closingDate">Дата закрытия:</label>
-                        <input type="datetime-local" class="form-control" id="closingDate" value="@Model.FinishedDate.ToString("yyyy-MM-ddTHH:mm")" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="taskStatus">Статус задачи:</label>
-                        <select class="form-control" id="taskStatus" @(Model.AuthorId == User.FindFirstValue(ClaimTypes.NameIdentifier) ? "" : "disabled")>
-                            @switch (Model.StatusTask)
-                            {
-                                case StatusTask.New:
+            <div class="form-group">
+                <label for="closingDate">Дата закрытия:</label>
+                <input type="datetime-local" class="form-control" id="closingDate" value="@Model.FinishedDate.ToString("yyyy-MM-ddTHH:mm")" readonly>
+            </div>
+            <div class="form-group">
+                <label for="taskStatus">Статус задачи:</label>
+                <select class="form-control" id="taskStatus" @(Model.AuthorId == User.FindFirstValue(ClaimTypes.NameIdentifier) ? "" : "disabled")>
+                        @switch (Model.StatusTask)
+                        {
+                            case StatusTask.New:
                                     <option value="new" selected>Новая</option>
                                     <option value="inProgress">В работе</option>
                                     <option value="completed">Завершена</option>
-                                    break;
-                                case StatusTask.InProgress:
+                                break;
+                            case StatusTask.InProgress:
                                     <option value="new">Новая</option>
                                     <option value="inProgress" selected>В работе</option>
                                     <option value="completed">Завершена</option>
-                                    break;
-                                case StatusTask.Completed:
+                                break;
+                            case StatusTask.Completed:
                                     <option value="new">Новая</option>
                                     <option value="inProgress">В работе</option>
                                     <option value="completed" selected>Завершена</option>
-                                    break;
-                                default:
+                                break;
+                            default:
                                     <option value="new">Новая</option>
                                     <option value="inProgress">В работе</option>
                                     <option value="completed">Завершена</option>
-                                    break;
-                            }
-                        </select>
-                    </div>
-                </form>
-            </div>
-        </div>
-        <div class="row mt-2">
-            <div class="col-md-12">
-                <h2 class="mb-4">Комментарии</h2>
-                <textarea class="form-control" id="taskComments" rows="5" placeholder="Добавить комментарии" @Model.Comment></textarea>
-            </div>
-        </div>
-        <div class="form-group" style="margin-top:20px; padding-bottom:80px;">
-            <div class="col-md-12">
-                <button type="submit" class="btn btn-primary" form="taskForm" id="saveTaskButton">Сохранить задачу</button>
+                                break;
+                        }
+                </select>
             </div>
         </div>
     </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <h2 class="mb-4">Комментарии</h2>
+            <div id="commentsList">
+                    @if (Model.comments != null && Model.comments.Any())
+                    {
+                        <ul>
+                            @foreach (var comment in Model.comments)
+                            {
+                                    <li>
+                                                <b>@ViewBag.AuthorName</b> (@comment.CreatedDate):
+                                    @comment.CommentText
+                                    </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p>Комментариев нет.</p>
+                    }
+            </div>
+            <div class="form-group" style="margin-top:20px; padding-bottom:80px;>
+                <label for="newComment">Добавить комментарий:</label>
+                <textarea class="form-control" id="taskComments" rows="3"></textarea>
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary"  id="saveTaskButton">Сохранить задачу</button>
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
@@ -93,32 +109,58 @@
         $(document).ready(function () {
             $("#saveTaskButton").click(function () {
                 var taskId = $("#taskForm input[name='Id']").val();
-                var taskName = $("#taskName").val();
-                var taskDescription = $("#taskDescription").val();
-                var creationDate = $("#creationDate").val();
-                var closingDate = $("#closingDate").val();
-                var taskStatus = $("#taskStatus").val();
-                var taskComments = $("#taskComments").val();
+                var AuthorId = "@User.FindFirstValue(ClaimTypes.NameIdentifier).ToString()";
+                var Name = $("#taskName").val();
+                var Description = $("#taskDescription").val();
+                var CreationDate = $("#creationDate").val();
+                var ClosingDate = $("#closingDate").val();
+                var StatusTask = $("#taskStatus").val();
+                var Comments = $("#taskComments").val();
 
-                console.error(taskName);
+                console.error(Name);
+
+                var taskData = {
+                    Task: {
+                        Name: Name,
+                        Description: Description,
+                        CreatedDate: CreationDate,
+                        FinishedDate: ClosingDate,
+                        StatusTask: StatusTask,
+                        AuthorId: AuthorId,
+                    },
+                    Comments: []
+                };
+
+                taskData.Task.Name = Name;
+                taskData.Task.Description = Description;
+                taskData.Task.CreatedDate = CreationDate;
+                taskData.Task.FinishedDate = ClosingDate;
+                taskData.Task.StatusTask = StatusTask;
+                taskData.Task.AuthorId = AuthorId;
+
+                console.error(typeof AuthorId);
+
+                if (Comments.trim() !== "") {
+                    taskData.Comments.push({
+                        CommentText: Comments,
+                        CreatedDate: new Date().toISOString(), // Текущая дата и время
+                        TaskId: 0, // ID задачи будет добавлен на сервере
+                        AuthorId: AuthorId
+                    });
+                }
+
 
                 $.ajax({
                     url: "/Task/Update/" + taskId,
                     type: "POST",
-                    data: {
-                        Id: taskId,
-                        Name: taskName, // Передаем все поля
-                        Description: taskDescription,
-                        CreatedDate: creationDate,
-                        FinishedDate: closingDate,
-                        StatusTask: taskStatus,
-                        Comment: taskComments
-                    },
+                    data: taskData,
                     success: function (response) {
                         console.error(Name);
                         // Обработка успешного ответа (например, обновление страницы)
-                        alert("Задача успешно обновлена!");
-                        location.reload();
+
+                        console.error(taskId);
+                        window.location.href = "/Task/GetTaskById" + taskId;
+
                     },
                     error: function (error) {
                         // Обработка ошибки

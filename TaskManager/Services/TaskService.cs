@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using TaskManager.Data;
 using TaskManager.Interfaces;
 using TaskManager.Models;
+using TaskManager.ViewModel;
 
 namespace TaskManager.Services
 {
@@ -18,24 +19,40 @@ namespace TaskManager.Services
             _userService = userService;
         }
 
-        public async Task<int> Create(TaskModel model)
+        public async Task<int> Create(TaskVM taskViewModel)
         {
 
-            TaskModel task = new TaskModel()
+            var newTask = new TaskModel
             {
-                Name = model.Name,
-                Description = model.Description,
-                CreatedDate = DateTime.SpecifyKind(model.CreatedDate, DateTimeKind.Utc),
-                FinishedDate = DateTime.SpecifyKind(model.FinishedDate, DateTimeKind.Utc),
-                Comment = model.Comment,
-                Author = await _userService.GetCurrentUser(),
-                StatusTask = model.StatusTask
+                Name = taskViewModel.Task.Name,
+                Description = taskViewModel.Task.Description,
+                CreatedDate = DateTime.SpecifyKind(taskViewModel.Task.CreatedDate, DateTimeKind.Utc),
+                FinishedDate = DateTime.SpecifyKind(taskViewModel.Task.FinishedDate, DateTimeKind.Utc),
+                StatusTask = taskViewModel.Task.StatusTask,
+                AuthorId = (await _userService.GetCurrentUser()).Id.ToString(),
+                comments = new List<Comments>() // Инициализируем список комментариев
             };
 
-            _dbContext.TaskModel.Add(task);
+            // 2. Добавление комментариев
+            if (taskViewModel.Comments != null)
+            {
+                foreach (var comment in taskViewModel.Comments)
+                {
+                    var newComment = new Comments
+                    {
+                        CommentText = comment.CommentText,
+                        CreatedDate = DateTime.UtcNow,
+                        TaskId = newTask.Id,
+                        AuthorId = (await _userService.GetCurrentUser()).Id.ToString()
+                    };
+                    newTask.comments.Add(newComment); 
+                }
+            }
+
+            _dbContext.TaskModel.Add(newTask);
             await _dbContext.SaveChangesAsync();
-            return task.Id;
-            
+            return newTask.Id;
+
         }
 
         public async Task<IEnumerable<TaskModel>> GetAll()
@@ -51,7 +68,10 @@ namespace TaskManager.Services
 
         public async Task<TaskModel> GetTaskById(int id)
         {
-            var task = await _dbContext.TaskModel.FindAsync(id);
+            var task = await _dbContext.TaskModel
+             .Include(t => t.comments)
+             .Include(t =>t.Author)
+             .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task != null)
                 return task;
@@ -59,7 +79,7 @@ namespace TaskManager.Services
                 return null;
         }
 
-        public async Task<TaskModel> Update(int id, TaskModel model)
+        public async Task<TaskModel> Update(int id, TaskVM model)
         {
             var task = await _dbContext.TaskModel.FindAsync(id);
 
@@ -68,12 +88,27 @@ namespace TaskManager.Services
                 throw new Exception("Задача не найдена.");
             }
 
-            task.Name = model.Name;
-            task.Description = model.Description;
-            task.CreatedDate = model.CreatedDate;
-            task.FinishedDate = model.FinishedDate;
-            task.Comment = model.Comment;
-            task.StatusTask = model.StatusTask;
+            task.Name = model.Task.Name;
+            task.Description = model.Task.Description;
+            task.CreatedDate = DateTime.SpecifyKind(model.Task.CreatedDate, DateTimeKind.Utc);
+            task.FinishedDate = DateTime.SpecifyKind(model.Task.FinishedDate, DateTimeKind.Utc);
+            task.StatusTask = model.Task.StatusTask;
+            task.comments = new List<Comments>();
+
+            if (model.Comments != null)
+            {
+                foreach (var comment in model.Comments)
+                {
+                    var newComment = new Comments
+                    {
+                        CommentText = comment.CommentText,
+                        CreatedDate = DateTime.UtcNow,
+                        TaskId = task.Id,
+                        AuthorId = (await _userService.GetCurrentUser()).Id.ToString()
+                    };
+                    task.comments.Add(newComment);
+                }
+            }
 
             await _dbContext.SaveChangesAsync();
 

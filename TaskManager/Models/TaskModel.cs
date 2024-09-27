@@ -14,11 +14,13 @@ namespace TaskManager.Models
 
         public DateTime CreatedDate { get; set; }
         public DateTime FinishedDate { get; set; }
-        public string? Comment { get; set; }
 
         public StatusTask StatusTask { get; set; }
 
         public string? AuthorId{ get; set; }
         public User? Author { get; set; }
+
+        public List<Comments>? comments { get; set; }
+
     }
 }

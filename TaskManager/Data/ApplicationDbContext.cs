@@ -14,6 +14,7 @@ namespace TaskManager.Data
 
         public DbSet<TaskModel> TaskModel { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<Comments> Comments { get; set; }   
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,6 +25,7 @@ namespace TaskManager.Data
                 .HasOne(t => t.Author)
                 .WithMany() // Если у пользователя может быть много задач
                 .HasForeignKey(t => t.AuthorId); // Идентификатор автора
+
 
         }
     }
